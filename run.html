@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+	<html>
+	<head>
+		<style>
+    		html, body {
+        		overflow: hidden;
+        		width   : 100%;
+        		height  : 100%;
+        		margin  : 0;
+        		padding : 0;
+   			}
+
+    		#renderCanvas {
+        		width   : 100%;
+        		height  : 100%;
+        		touch-action: none;
+    		}
+		</style>
+			<meta charset="UTF-8">
+			<title>Week 1</title>
+			<script type="text/javascript" src="babylon.custom.js"></script>
+			<script src="babylon.objFileLoader.js"></script>
+			<script src="cannon.js"></script>		
+			<link rel="stylesheet" type="text/css" href="style_canvas.css"/>
+	</head>
+
+	<body>
+		<canvas id="renderCanvas"></canvas>
+		<script>
+			var canvas = document.getElementById('renderCanvas');
+			var engine = new BABYLON.Engine(canvas, true);
+
+			var createScene = function(){
+				BABYLON.OBJFileLoader.OPTIMIZE_WITH_UV = true;
+
+				var scene = new BABYLON.Scene(engine);
+				//physics
+				scene.enablePhysics();
+
+				var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+
+				//ground
+				var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:20, width:20}, scene);
+				var groundMaterial = new BABYLON.StandardMaterial("groundMat", scene);
+				groundMaterial.diffuseTexture = new BABYLON.Texture("texture/grass.jpg", scene);
+				groundMaterial.diffuseTexture.uScale = 10;
+				groundMaterial.diffuseTexture.vScale = 10;
+				ground.position.y = 0;
+				ground.position.x = 0;
+				ground.position.z = 0;
+				ground.material = groundMaterial;
+
+				//walls
+				//8var goal = BABYLON.SceneLoader.Append("texture/", "goal.obj", scene);
+
+				//player
+				var player = BABYLON.MeshBuilder.CreateBox("player", {height: 0.5, width:0.5, depth:0.5}, scene);
+				var playerMaterial = new BABYLON.StandardMaterial("playerMat", scene);
+				playerMaterial.diffuseTexture = new BABYLON.Texture("texture/green.jpg", scene);
+				player.material = playerMaterial;
+
+				var box = BABYLON.MeshBuilder.CreateBox("box", {height: 0.5, width:0.5, depth:0.5}, scene);
+				var boxMaterial = new BABYLON.StandardMaterial("boxMat", scene);
+				boxMaterial.diffuseTexture = new BABYLON.Texture("texture/box.png", scene);
+				boxMaterial.diffuseTexture.vScale = 10;
+				boxMaterial.diffuseTexture.uScale = 10;
+				box.material = boxMaterial;
+				
+				player.position.y = 1;
+				player.position.x = 4;
+
+				box.position.x = 5;
+				box.position.y = 2;
+				document.addEventListener("keydown", onDocumentKeyDown, true);
+				function onDocumentKeyDown(event){
+					var KeyCode = event.which;
+
+					if(KeyCode == 83){//s
+						player.position.x = player.position.x + 0.4;
+					}else if(KeyCode == 87){//w
+						player.position.x = player.position.x - 0.4;  
+					}else if(KeyCode == 68){//d
+						player.position.z = player.position.z + 0.4;
+					}else if(KeyCode == 65){//a
+						player.position.z = player.position.z - 0.4;
+					}else if(KeyCode == 32){//a
+						player.physicsImpostor.applyImpulse(new BABYLON.Vector3(0,5,0), player.getAbsolutePosition());
+					}
+
+				}
+
+				//camera settings
+				var camera = new BABYLON.ArcRotateCamera("camera", 0, 1.5, 5, new BABYLON.Vector3(4, 1, 0), scene);
+				//physics
+				ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
+				player.physicsImpostor = new BABYLON.PhysicsImpostor(player, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 1, restitution: 0.9 }, scene);
+
+				box.physicsImpostor = new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
+				var counter = 0;
+
+				var mushroom = 0;
+
+			function createMushroom(){
+				mushroom = BABYLON.MeshBuilder.CreateBox("mushroom", {height: 0.2, width:0.2, depth:0.2}, scene);
+
+				var mushroomMaterial = new BABYLON.StandardMaterial("mushMat", scene);
+				mushroomMaterial.diffuseTexture = new BABYLON.Texture("texture/mushroom.png", scene);
+
+				mushroom.material=mushroomMaterial;
+
+				mushroom.position.x = 4.5;
+				mushroom.position.y = 3;
+
+				mushroom.physicsImpostor = new BABYLON.PhysicsImpostor(mushroom, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 1, restitution: 0.9 }, scene);
+
+				player.physicsImpostor.registerOnPhysicsCollide(mushroom.physicsImpostor, function(main, collided){
+
+					player.scaling = new BABYLON.Vector3(2,2,2);
+					mushroom.scaling = new BABYLON.Vector3(0,0,0);
+				});
+
+				}
+
+			//collision
+			box.physicsImpostor.registerOnPhysicsCollide(player.physicsImpostor, function(main, collided){
+				if(counter == 0){
+					createMushroom();
+					counter =+ 1;
+				}
+
+			});			
+
+				return scene;
+			}
+  		  
+			//call scene function
+			var scene = createScene();
+			//render canvas
+			engine.runRenderLoop(function(){
+				scene.render();
+			});
+			//resize window listener
+			window.addEventListener('resize', function() {
+    			engine.resize();
+			});	
+
+
+
+  			window.addEventListener('DOMContentLoaded', function() {
+        // All the following code is entered here.
+    	});
+		</script>
+	</body>
+	</html>
